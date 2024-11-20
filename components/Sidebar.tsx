@@ -70,8 +70,6 @@ const Sidebar = ({ onCollapse }: SidebarProps) => {
     const appointment: Appointment = {
       ...newAppointment,
       id,
-      backgroundColor: '#3B82F6',
-      borderColor: '#3B82F6',
     };
     setAppointments([...appointments, appointment]);
     setIsModalOpen(false);
