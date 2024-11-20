@@ -13,6 +13,7 @@ interface NewAppointmentModalProps {
   onSubmit: (appointment: any) => void;
   doctors: Doctor[];
   patients: Patient[];
+  selectedDate?: Date | null;
 }
 
 export default function NewAppointmentModal({ 
@@ -20,7 +21,8 @@ export default function NewAppointmentModal({
   onClose, 
   onSubmit,
   doctors,
-  patients 
+  patients,
+  selectedDate
 }: NewAppointmentModalProps) {
   const params = useParams();
   const clinicSlug = params.clinicSlug as string;
@@ -29,7 +31,7 @@ export default function NewAppointmentModal({
   const [formData, setFormData] = useState({
     patient_id: '',
     doctor_id: '',
-    date: '',
+    date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
     time: '',
     duration: '30',
     notes: '',

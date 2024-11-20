@@ -2,6 +2,8 @@
 
 import { mockAppointments } from '@/app/data/mockAppointments';
 import { Appointment } from '@/types/appointment';
+import { Doctor } from '@/app/services/doctorService';
+import { Patient } from '@/app/services/patientService';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
@@ -29,6 +31,11 @@ interface SidebarProps {
 
 const Sidebar = ({ onCollapse }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const pathname = usePathname();
   const { clinicSlug } = useAuth();
   const router = useRouter();
@@ -48,10 +55,6 @@ const Sidebar = ({ onCollapse }: SidebarProps) => {
       { icon: FaCog, label: 'Configurações', href: `/${clinicSlug}/configuracoes` },
     ];
   }, [clinicSlug]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
 
   const handleCollapse = () => {
     const newCollapsed = !isCollapsed;
@@ -188,6 +191,8 @@ const Sidebar = ({ onCollapse }: SidebarProps) => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddAppointment}
         selectedDate={selectedDate}
+        doctors={doctors}
+        patients={patients}
       />
     </aside>
   );
