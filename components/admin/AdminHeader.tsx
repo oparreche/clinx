@@ -1,7 +1,7 @@
 "use client";
 
 import { FaBell, FaSearch, FaUserCircle } from "react-icons/fa";
-import { useAdminAuth } from "@/app/(admin)/context/AdminAuthContext";
+import { useAdminAuth } from "@/app/auth/context/AdminAuthContext";
 import { useState, useRef, useEffect } from "react";
 
 interface AdminHeaderProps {
