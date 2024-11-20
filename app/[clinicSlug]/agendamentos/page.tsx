@@ -41,8 +41,8 @@ function AgendamentosContent() {
     doctor: '',
     patient: '',
     status: '',
-    startDate: null,
-    endDate: null
+    startDate: '',
+    endDate: ''
   });
 
   useEffect(() => {
@@ -105,10 +105,10 @@ function AgendamentosContent() {
     if (filters.status) {
       filtered = filtered.filter(app => app.status === filters.status);
     }
-    if (filters.startDate) {
+    if (filters.startDate && filters.startDate !== '') {
       filtered = filtered.filter(app => new Date(app.start_time) >= new Date(filters.startDate));
     }
-    if (filters.endDate) {
+    if (filters.endDate && filters.endDate !== '') {
       filtered = filtered.filter(app => new Date(app.start_time) <= new Date(filters.endDate));
     }
 
