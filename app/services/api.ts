@@ -111,4 +111,5 @@ export const validateClinic = async (clinicSlug: string) => {
     }
 };
 
+export { api };
 export default api;

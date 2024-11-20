@@ -11,14 +11,20 @@ interface NewAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (appointment: any) => void;
+  doctors: Doctor[];
+  patients: Patient[];
 }
 
-export default function NewAppointmentModal({ isOpen, onClose, onSubmit }: NewAppointmentModalProps) {
+export default function NewAppointmentModal({ 
+  isOpen, 
+  onClose, 
+  onSubmit,
+  doctors,
+  patients 
+}: NewAppointmentModalProps) {
   const params = useParams();
   const clinicSlug = params.clinicSlug as string;
   
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     patient_id: '',
@@ -31,25 +37,10 @@ export default function NewAppointmentModal({ isOpen, onClose, onSubmit }: NewAp
   });
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [doctorsData, patientsData] = await Promise.all([
-          doctorService.getDoctors(clinicSlug),
-          patientService.getPatients(clinicSlug)
-        ]);
-        setDoctors(doctorsData);
-        setPatients(patientsData);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (isOpen) {
-      loadData();
+      setLoading(false);
     }
-  }, [isOpen, clinicSlug]);
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +98,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSubmit }: NewAp
                 disabled={loading}
               >
                 <option value="">Selecione um paciente</option>
-                {patients.map((patient) => (
+                {patients?.map((patient) => (
                   <option key={patient.id} value={patient.id}>
                     {patient.name}
                   </option>
@@ -127,7 +118,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSubmit }: NewAp
                 disabled={loading}
               >
                 <option value="">Selecione um médico</option>
-                {doctors.map((doctor) => (
+                {doctors?.map((doctor) => (
                   <option key={doctor.id} value={doctor.id}>
                     {doctor.name} - {doctor.specialization}
                   </option>

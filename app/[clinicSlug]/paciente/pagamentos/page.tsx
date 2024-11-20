@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaCreditCard, FaBarcode, FaPix } from 'react-icons/fa';
+import { FaCreditCard, FaBarcode } from 'react-icons/fa';
+import { SiPix } from 'react-icons/si';
 
 const mockPayments = [
   {
@@ -51,8 +52,8 @@ export default function Payments() {
                       onClick={() => {}}
                       className="flex items-center w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
                     >
-                      <FaPix className="mr-2" />
-                      PIX
+                      <SiPix className="mr-2" />
+                      Pix
                     </button>
                     <button
                       onClick={() => {}}

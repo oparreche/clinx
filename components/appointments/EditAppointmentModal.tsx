@@ -1,198 +1,248 @@
 import React, { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
-import { Appointment, appointmentStatusMap } from '@/types/appointment';
+import { Dialog } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { Appointment, AppointmentStatus, appointmentStatusMap } from '@/types/appointment';
+import { Doctor } from '@/app/services/doctorService';
+import { Patient } from '@/app/services/patientService';
 
 interface EditAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (appointment: Appointment) => void;
+  onUpdate: (id: number, data: Partial<Appointment>) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
   appointment: Appointment | null;
+  doctors: Doctor[];
+  patients: Patient[];
 }
 
 const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
   isOpen,
   onClose,
-  onSave,
-  appointment: initialAppointment,
+  onUpdate,
+  onDelete,
+  appointment,
+  doctors,
+  patients
 }) => {
-  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [formData, setFormData] = useState<Partial<Appointment>>({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (initialAppointment) {
-      // Garantir que as datas sejam objetos Date válidos
-      const formattedAppointment = {
-        ...initialAppointment,
-        start: initialAppointment.start instanceof Date 
-          ? initialAppointment.start 
-          : parseISO(initialAppointment.start as unknown as string),
-        end: initialAppointment.end instanceof Date 
-          ? initialAppointment.end 
-          : parseISO(initialAppointment.end as unknown as string),
-      };
-      setAppointment(formattedAppointment);
-    }
-  }, [initialAppointment]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
     if (appointment) {
-      onSave(appointment);
-      onClose();
+      setFormData({
+        doctor_id: appointment.doctor_id,
+        patient_id: appointment.patient_id,
+        date: appointment.date,
+        start_time: appointment.start_time,
+        end_time: appointment.end_time,
+        notes: appointment.notes,
+        status: appointment.status
+      });
     }
+  }, [appointment]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (appointment && formData) {
+      setLoading(true);
+      try {
+        await onUpdate(appointment.id, formData);
+        onClose();
+      } catch (error) {
+        console.error('Error updating appointment:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (appointment && window.confirm('Tem certeza que deseja excluir este agendamento?')) {
+      setLoading(true);
+      try {
+        await onDelete(appointment.id);
+        onClose();
+      } catch (error) {
+        console.error('Error deleting appointment:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   if (!isOpen || !appointment) return null;
 
-  // Função auxiliar para formatar data com segurança
-  const formatSafeDate = (date: Date | string, formatString: string): string => {
-    try {
-      if (date instanceof Date) {
-        return format(date, formatString);
-      }
-      return format(parseISO(date as string), formatString);
-    } catch (error) {
-      console.error('Error formatting date:', error, date);
-      return '';
-    }
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Editar Agendamento</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Paciente
-            </label>
-            <input
-              type="text"
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={appointment.patientName}
-              onChange={(e) => setAppointment({ ...appointment, patientName: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Médico
-            </label>
-            <select
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={appointment.doctor}
-              onChange={(e) => setAppointment({ ...appointment, doctor: e.target.value })}
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="mx-auto max-w-lg rounded bg-white p-6 w-full">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog.Title className="text-lg font-medium">
+              Editar Agendamento
+            </Dialog.Title>
+            <button
+              onClick={onClose}
+              className="rounded-full p-1 hover:bg-gray-100"
             >
-              <option value="">Selecione um médico</option>
-              <option value="Dr. Carlos Santos">Dr. Carlos Santos</option>
-              <option value="Dra. Ana Beatriz">Dra. Ana Beatriz</option>
-            </select>
+              <XMarkIcon className="h-5 w-5" />
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Médico
+              </label>
+              <select
+                name="doctor_id"
+                value={formData.doctor_id}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              >
+                <option value="">Selecione um médico</option>
+                {doctors.map(doctor => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Paciente
+              </label>
+              <select
+                name="patient_id"
+                value={formData.patient_id}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              >
+                <option value="">Selecione um paciente</option>
+                {patients.map(patient => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Data
               </label>
               <input
                 type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                value={formatSafeDate(appointment.start, 'yyyy-MM-dd')}
-                onChange={(e) => {
-                  try {
-                    const date = parseISO(e.target.value);
-                    const start = new Date(appointment.start);
-                    const end = new Date(appointment.end);
-                    
-                    start.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                    end.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                    
-                    setAppointment({ ...appointment, start, end });
-                  } catch (error) {
-                    console.error('Error updating date:', error);
-                  }
-                }}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Hora Início
+                </label>
+                <input
+                  type="time"
+                  name="start_time"
+                  value={formData.start_time}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Hora Fim
+                </label>
+                <input
+                  type="time"
+                  name="end_time"
+                  value={formData.end_time}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  required
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Horário
+                Status
               </label>
-              <input
-                type="time"
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                value={formatSafeDate(appointment.start, 'HH:mm')}
-                onChange={(e) => {
-                  try {
-                    const [hours, minutes] = e.target.value.split(':');
-                    const start = new Date(appointment.start);
-                    const end = new Date(appointment.end);
-                    
-                    start.setHours(parseInt(hours), parseInt(minutes));
-                    end.setHours(parseInt(hours) + 1, parseInt(minutes));
-                    
-                    setAppointment({ ...appointment, start, end });
-                  } catch (error) {
-                    console.error('Error updating time:', error);
-                  }
-                }}
+              >
+                {Object.entries(appointmentStatusMap).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Observações
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes || ''}
+                onChange={handleChange}
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <select
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={appointment.status}
-              onChange={(e) => setAppointment({ ...appointment, status: e.target.value as Appointment['status'] })}
-            >
-              {Object.entries(appointmentStatusMap).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="flex justify-between pt-4">
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50"
+              >
+                Excluir
+              </button>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Observações
-            </label>
-            <textarea
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              rows={3}
-              value={appointment.notes}
-              onChange={(e) => setAppointment({ ...appointment, notes: e.target.value })}
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Salvar
-            </button>
-          </div>
-        </form>
+              <div className="space-x-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={loading}
+                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50"
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </form>
+        </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   );
 };
 

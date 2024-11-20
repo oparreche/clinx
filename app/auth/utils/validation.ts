@@ -60,7 +60,7 @@ export const validateRegistrationData = (data: RegisterData): string[] => {
   const passwordErrors = validatePassword(data.password);
   errors.push(...passwordErrors);
 
-  if (data.password !== data.password_confirmation) {
+  if ('password_confirmation' in data && data.password !== data.password_confirmation) {
     errors.push('As senhas não coincidem');
   }
 
@@ -69,7 +69,7 @@ export const validateRegistrationData = (data: RegisterData): string[] => {
   }
 
   if (data.role === 'doctor') {
-    if (!data.tenant_id) {
+    if (!('tenant_id' in data) || !data.tenant_id) {
       errors.push('A clínica é obrigatória para médicos');
     }
   }

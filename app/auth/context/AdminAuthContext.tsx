@@ -65,10 +65,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         } else if (Array.isArray(err.response.data.message)) {
           setValidationErrors(
             err.response.data.message.reduce((acc: Record<string, string[]>, curr: any) => {
-              const [field, error] = Object.entries(curr.constraints)[0];
-              acc[curr.property] = [...(acc[curr.property] || []), error];
+              if (typeof curr.property === 'string' && curr.constraints && typeof curr.constraints === 'object') {
+                const constraintEntries = Object.entries(curr.constraints);
+                if (constraintEntries.length > 0) {
+                  const [, error] = constraintEntries[0];
+                  if (typeof error === 'string') {
+                    const property = curr.property as string;
+                    acc[property] = [...(acc[property] || []), error];
+                  }
+                }
+              }
               return acc;
-            }, {})
+            }, {} as Record<string, string[]>)
           );
         }
       } else {

@@ -73,13 +73,19 @@ export default function SettingsPage() {
         [name]: type === 'checkbox' ? checked : value,
       }));
     } else {
-      setSettings((prev) => ({
-        ...prev,
-        [nameParts[0]]: {
-          ...prev[nameParts[0] as keyof Settings],
-          [nameParts[1]]: value,
-        },
-      }));
+      setSettings((prev) => {
+        const section = prev[nameParts[0] as keyof Settings];
+        if (typeof section === 'object' && section !== null) {
+          return {
+            ...prev,
+            [nameParts[0]]: {
+              ...section,
+              [nameParts[1]]: value,
+            },
+          };
+        }
+        return prev;
+      });
     }
   };
 

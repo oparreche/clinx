@@ -10,7 +10,7 @@ import { EventClickArg } from '@fullcalendar/core';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { FaCalendarAlt, FaList, FaPlus, FaFilter } from 'react-icons/fa';
-import appointmentService, { Appointment } from '@/services/appointmentService';
+import appointmentService, { Appointment, CreateAppointmentDTO } from '@/services/appointmentService';
 import doctorService, { Doctor } from '@/services/doctorService';
 import patientService, { Patient } from '@/services/patientService';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
@@ -144,7 +144,7 @@ function AgendamentosContent() {
     setIsModalOpen(true);
   };
 
-  const handleCreateAppointment = async (data: any) => {
+  const handleCreateAppointment = async (data: CreateAppointmentDTO) => {
     if (!clinicSlug) return;
     
     setIsLoading(true);
@@ -159,8 +159,7 @@ function AgendamentosContent() {
         date: data.date,
         start_time: formatDate(data.start_time),
         end_time: formatDate(data.end_time),
-        notes: data.notes,
-        status: 'scheduled'
+        notes: data.notes
       });
 
       setAppointments(prev => [...prev, newAppointment]);
