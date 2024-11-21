@@ -14,28 +14,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Initialize authentication state
   useEffect(() => {
-    const token = Cookies.get('token');
-    if (token) {
-      api.defaults.headers.common['Authorization'] = token;
-      authService.getProfile()
-        .then(userData => {
-          setUser(userData);
-          setIsAuthenticated(true);
-        })
-        .catch(() => {
-          Cookies.remove('token');
-          api.defaults.headers.common['Authorization'] = '';
-          setUser(null);
-          setIsAuthenticated(false);
-        })
-        .finally(() => {
+    const initializeAuth = async () => {
+      try {
+        const token = Cookies.get('token');
+        const clinicSlug = Cookies.get('clinicSlug');
+        const storedUser = localStorage.getItem('user');
+        
+        if (!token || !clinicSlug || !storedUser) {
+          handleAuthFailure();
           setIsLoading(false);
-        });
-    } else {
-      setIsLoading(false);
+          return;
+        }
+
+        // Set token in API headers
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        try {
+          // First try to use stored user data
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+
+          // Then validate token and update user data in background
+          const userData = await authService.getProfile();
+          const updatedUser: User = {
+            ...userData,
+            clinicSlug
+          };
+
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        } catch (error) {
+          console.error('Error validating user session:', error);
+          handleAuthFailure();
+          router.push(`/${clinicSlug}/login`);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        handleAuthFailure();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [router]);
+
+  const handleAuthFailure = () => {
+    // Clear auth data but keep lastClinicSlug
+    const lastClinicSlug = localStorage.getItem('lastClinicSlug');
+    
+    // Clear all auth data
+    Cookies.remove('token');
+    Cookies.remove('clinicSlug');
+    localStorage.removeItem('user');
+    api.defaults.headers.common['Authorization'] = '';
+    setUser(null);
+    setIsAuthenticated(false);
+    
+    // Restore lastClinicSlug if it existed
+    if (lastClinicSlug) {
+      localStorage.setItem('lastClinicSlug', lastClinicSlug);
     }
-  }, []);
+  };
 
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -53,12 +96,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clinicSlug: credentials.clinicSlug
       };
 
+      // Set authentication data
       Cookies.set('token', response.access_token);
-      api.defaults.headers.common['Authorization'] = response.access_token;
+      Cookies.set('clinicSlug', credentials.clinicSlug);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Update application state
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
       setUser(user);
       setIsAuthenticated(true);
+
+      // Navigate to dashboard
       router.push(`/${credentials.clinicSlug}/dashboard`);
     } catch (error) {
+      console.error('Login error:', error);
+      handleAuthFailure();
       throw error;
     }
   };
@@ -76,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       Cookies.set('token', response.access_token);
-      api.defaults.headers.common['Authorization'] = response.access_token;
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
       setUser(user);
       setIsAuthenticated(true);
       if (data.clinicSlug) {
@@ -89,14 +141,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      // Get clinic slug from multiple sources, prioritizing the most recent
+      const currentClinicSlug = user?.clinicSlug || 
+                               Cookies.get('clinicSlug') || 
+                               localStorage.getItem('lastClinicSlug');
+      
+      // Call logout API
       await authService.logout();
-      Cookies.remove('token');
-      api.defaults.headers.common['Authorization'] = '';
-      setUser(null);
-      setIsAuthenticated(false);
-      router.push('/login');
+      
+      // Clear all auth data
+      handleAuthFailure();
+      
+      // Redirect to clinic-specific login
+      if (currentClinicSlug) {
+        // Keep the last clinic slug for future redirects
+        localStorage.setItem('lastClinicSlug', currentClinicSlug);
+        router.push(`/${currentClinicSlug}/login`);
+      } else {
+        // Fallback to main login only if no clinic slug is found
+        console.warn('No clinic slug found during logout, redirecting to main login');
+        router.push('/login');
+      }
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.error('Logout error:', error);
+      // Even if logout fails, clear local auth data and redirect to clinic login
+      const clinicSlug = user?.clinicSlug || 
+                        Cookies.get('clinicSlug') || 
+                        localStorage.getItem('lastClinicSlug');
+      
+      handleAuthFailure();
+      
+      if (clinicSlug) {
+        // Keep the last clinic slug for future redirects
+        localStorage.setItem('lastClinicSlug', clinicSlug);
+        router.push(`/${clinicSlug}/login`);
+      } else {
+        router.push('/login');
+      }
     }
   };
 

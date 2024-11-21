@@ -25,13 +25,17 @@ export default function LoginPage() {
                 if (!result.valid) {
                     setError(result.message || "Clínica não encontrada. Verifique o endereço e tente novamente.");
                     setIsValidClinic(false);
+                    localStorage.removeItem('lastClinicSlug');
                 } else {
                     setIsValidClinic(true);
                     setError(null);
+                    // Save valid clinic slug for future redirects
+                    localStorage.setItem('lastClinicSlug', clinicSlug);
                 }
             } catch (error) {
                 setError("Erro ao validar a clínica. Por favor, tente novamente mais tarde.");
                 setIsValidClinic(false);
+                localStorage.removeItem('lastClinicSlug');
                 console.error("Clinic validation error:", error);
             } finally {
                 setIsLoading(false);

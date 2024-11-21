@@ -201,7 +201,14 @@ function AgendamentosContent() {
 
       console.log('Appointment created:', newAppointment);
       
-      setAppointments(prev => [...prev, newAppointment]);
+      // Handle both single appointment and array of appointments
+      setAppointments(prev => {
+        if (Array.isArray(newAppointment)) {
+          return [...prev, ...newAppointment];
+        }
+        return [...prev, newAppointment];
+      });
+      
       setIsNewModalOpen(false);
     } catch (err: any) {
       console.error('Error creating appointment:', err);
@@ -224,10 +231,22 @@ function AgendamentosContent() {
       console.log('Updating appointment:', { id, data });
       
       const updatedAppointment = await appointmentService.updateAppointment(clinicSlug, id, data);
-      
+
       console.log('Appointment updated:', updatedAppointment);
       
-      setAppointments(prev => prev.map(a => a.id === id ? updatedAppointment : a));
+      setAppointments(prev => {
+        if (Array.isArray(updatedAppointment)) {
+          // If it's an array of appointments (recurring update), replace all affected appointments
+          const updatedIds = new Set(updatedAppointment.map(a => a.id));
+          return [
+            ...prev.filter(a => !updatedIds.has(a.id)), // Keep appointments not in the update
+            ...updatedAppointment // Add all updated appointments
+          ];
+        }
+        // If it's a single appointment, just update that one
+        return prev.map(a => a.id === id ? updatedAppointment : a);
+      });
+      
       setIsModalOpen(false);
     } catch (err: any) {
       console.error('Error updating appointment:', err);
@@ -413,6 +432,7 @@ function AgendamentosContent() {
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
         onSubmit={handleCreateAppointment}
+        selectedDate={null}
         doctors={doctors}
         patients={patients}
       />

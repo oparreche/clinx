@@ -3,37 +3,46 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
+  const clinicSlug = request.cookies.get('clinicSlug')?.value;
   const { pathname } = request.nextUrl;
-  const clinicSlug = pathname.split('/')[1];
+  const pathSegments = pathname.split('/');
+  const urlClinicSlug = pathSegments[1];
 
-  console.log('Middleware - Path:', pathname, 'Token:', !!token);
+  console.log('Middleware - Path:', pathname, 'Token:', !!token, 'ClinicSlug:', clinicSlug);
 
   // Public paths that don't require authentication
-  const publicPaths = ['/_next', '/api', '/favicon.ico', '/images'];
+  const publicPaths = ['/_next', '/api', '/favicon.ico', '/images', '/login'];
   if (publicPaths.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
   // Root path handling
   if (pathname === '/') {
+    if (token && clinicSlug) {
+      return NextResponse.redirect(new URL(`/${clinicSlug}/dashboard`, request.url));
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Login page handling
-  if (pathname === '/login') {
-    if (token) {
+  // Clinic-specific login page handling
+  if (pathname.endsWith('/login')) {
+    if (token && clinicSlug) {
       return NextResponse.redirect(new URL(`/${clinicSlug}/dashboard`, request.url));
     }
     return NextResponse.next();
   }
 
   // Protected routes handling
-  if (pathname.includes('/dashboard')) {
-    if (!token) {
-      console.log('No token found, redirecting to login');
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-    return NextResponse.next();
+  if (!token || !clinicSlug) {
+    console.log('No token or clinic slug found, redirecting to login');
+    const loginPath = urlClinicSlug ? `/${urlClinicSlug}/login` : '/login';
+    return NextResponse.redirect(new URL(loginPath, request.url));
+  }
+
+  // Ensure user is accessing their assigned clinic
+  if (urlClinicSlug && urlClinicSlug !== clinicSlug) {
+    console.log('Clinic slug mismatch, redirecting to correct clinic');
+    return NextResponse.redirect(new URL(`/${clinicSlug}/dashboard`, request.url));
   }
 
   return NextResponse.next();

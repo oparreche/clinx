@@ -60,25 +60,15 @@ const api = axios.create({
     },
 });
 
-// Add request interceptor to add auth token
-api.interceptors.request.use((config) => {
-    const token = Cookies.get('token');
-    if (token) {
-        // Ensure token has 'Bearer ' prefix
-        config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-    }
-    return config;
-});
+// Initialize API with stored token if available
+const token = Cookies.get('token');
+if (token) {
+    api.defaults.headers.common['Authorization'] = token;
+}
 
-// Add response interceptor to handle errors
+// API interceptors for handling auth
 api.interceptors.response.use(
     (response) => {
-        console.log('Response:', { 
-            url: response.config.url, 
-            method: response.config.method, 
-            status: response.status,
-            data: response.data 
-        });
         return response;
     },
     (error) => {
@@ -89,13 +79,23 @@ api.interceptors.response.use(
             data: error.response?.data
         });
         
-        // If token is invalid or expired, clear cookies and redirect to login
+        // If token is invalid or expired, clear auth data and redirect
         if (error.response?.status === 401) {
+            // Store clinic slug before clearing data
             const clinicSlug = Cookies.get('clinicSlug');
+            
+            // Clear all auth data
             Cookies.remove('token');
-            Cookies.remove('user');
             Cookies.remove('clinicSlug');
-            window.location.href = clinicSlug ? `/${clinicSlug}/login` : '/login';
+            localStorage.removeItem('user');
+            api.defaults.headers.common['Authorization'] = '';
+            
+            // Redirect to clinic-specific login page
+            if (typeof window !== 'undefined') {
+                const loginPath = clinicSlug ? `/${clinicSlug}/login` : '/login';
+                console.log('Redirecting to:', loginPath);
+                window.location.href = loginPath;
+            }
         }
         
         return Promise.reject(error);
@@ -107,18 +107,17 @@ export const authService = {
         try {
             const response = await api.post<AuthResponse>(API_ROUTES.AUTH.LOGIN, data);
             if (response.data.access_token) {
-                // Save token with Bearer prefix
                 const token = `Bearer ${response.data.access_token}`;
                 Cookies.set('token', token);
                 api.defaults.headers.common['Authorization'] = token;
                 
-                // Save clinic slug
                 if (data.clinic_slug) {
                     Cookies.set('clinicSlug', data.clinic_slug);
                 }
             }
             return response.data;
         } catch (error) {
+            console.error('Login error:', error);
             throw error;
         }
     },
@@ -173,12 +172,21 @@ export const authService = {
         }
     },
 
-    async logout(): Promise<void> {
+    async logout(): Promise<{ clinicSlug: string | null }> {
         try {
-            await api.post(API_ROUTES.AUTH.LOGOUT);
+            // Store clinic slug before making the request
+            const clinicSlug = Cookies.get('clinicSlug') || null;
+            
+            const response = await api.post(API_ROUTES.AUTH.LOGOUT);
+            
+            // Clear all auth data
             Cookies.remove('token');
-            Cookies.remove('admin_token');
+            Cookies.remove('clinicSlug');
+            localStorage.removeItem('user');
             api.defaults.headers.common['Authorization'] = '';
+            
+            // Return the clinic slug for the caller to use
+            return { clinicSlug };
         } catch (error) {
             console.error('Logout error:', error);
             throw error;

@@ -1,0 +1,244 @@
+openapi: 3.0.0
+info:
+  title: Clinx Appointments API
+  version: 1.0.0
+  description: API para gerenciamento de agendamentos, incluindo agendamentos recorrentes
+
+servers:
+  - url: http://localhost:8000
+    description: Servidor de desenvolvimento
+
+paths:
+  /api/clinics/{clinicSlug}/appointments:
+    post:
+      summary: Criar um único agendamento
+      tags:
+        - Agendamentos
+      parameters:
+        - name: clinicSlug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentDTO'
+      responses:
+        '201':
+          description: Agendamento criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Não autorizado
+        '404':
+          description: Clínica não encontrada
+
+  /api/clinics/{clinicSlug}/appointments/recurring:
+    post:
+      summary: Criar agendamentos recorrentes
+      tags:
+        - Agendamentos
+      parameters:
+        - name: clinicSlug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - appointments
+                - recurrence
+              properties:
+                appointments:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CreateAppointmentDTO'
+                recurrence:
+                  $ref: '#/components/schemas/RecurrenceInfo'
+      responses:
+        '201':
+          description: Agendamentos recorrentes criados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appointments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Appointment'
+                  recurrence_group_id:
+                    type: string
+                    description: ID único para o grupo de agendamentos recorrentes
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Não autorizado
+        '404':
+          description: Clínica não encontrada
+
+components:
+  schemas:
+    CreateAppointmentDTO:
+      type: object
+      required:
+        - doctor_id
+        - patient_id
+        - date
+        - start_time
+        - end_time
+      properties:
+        doctor_id:
+          type: number
+          description: ID do médico
+        patient_id:
+          type: number
+          description: ID do paciente
+        date:
+          type: string
+          format: date
+          description: Data do agendamento (YYYY-MM-DD)
+        start_time:
+          type: string
+          format: time
+          description: Horário de início (HH:mm)
+        end_time:
+          type: string
+          format: time
+          description: Horário de término (HH:mm)
+        notes:
+          type: string
+          description: Observações do agendamento
+        recurrence:
+          $ref: '#/components/schemas/RecurrenceInfo'
+
+    RecurrenceInfo:
+      type: object
+      required:
+        - type
+        - interval
+      properties:
+        type:
+          type: string
+          enum:
+            - none
+            - daily
+            - weekly
+            - monthly
+          description: Tipo de recorrência
+        interval:
+          type: number
+          minimum: 1
+          description: Intervalo de recorrência (ex: a cada X dias/semanas/meses)
+        endDate:
+          type: string
+          format: date
+          description: Data final da recorrência (opcional)
+        daysOfWeek:
+          type: array
+          items:
+            type: number
+            minimum: 0
+            maximum: 6
+          description: Dias da semana (0 = Domingo, 6 = Sábado) para recorrência semanal
+
+    Appointment:
+      type: object
+      required:
+        - id
+        - clinic_id
+        - doctor_id
+        - patient_id
+        - date
+        - start_time
+        - end_time
+        - status
+      properties:
+        id:
+          type: number
+          description: ID único do agendamento
+        clinic_id:
+          type: number
+          description: ID da clínica
+        doctor_id:
+          type: number
+          description: ID do médico
+        patient_id:
+          type: number
+          description: ID do paciente
+        date:
+          type: string
+          format: date
+          description: Data do agendamento
+        start_time:
+          type: string
+          format: time
+          description: Horário de início
+        end_time:
+          type: string
+          format: time
+          description: Horário de término
+        status:
+          type: string
+          enum:
+            - scheduled
+            - completed
+            - cancelled
+            - confirmed
+          default: scheduled
+          description: Status do agendamento
+        notes:
+          type: string
+          description: Observações do agendamento
+        recurrence_group_id:
+          type: string
+          description: ID do grupo de recorrência (se aplicável)
+        recurrence:
+          $ref: '#/components/schemas/RecurrenceInfo'
+        doctor:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            email:
+              type: string
+            specialty:
+              type: string
+        patient:
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            email:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
