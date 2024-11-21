@@ -1,102 +1,42 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
-// Constants
-const SESSION_TIMEOUT = 1000 * 60 * 60 * 24; // 24 hours
-
-// Public paths that don't require authentication
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password'];
-
-// Role-based access configuration
-const ROLE_ACCESS = {
-  admin: [
-    'dashboard',
-    'agendamentos',
-    'psicologos',
-    'pacientes',
-    'funcionarios',
-    'servicos',
-    'lembretes',
-    'financeiro',
-    'configuracoes'
-  ],
-  doctor: [
-    'medico',
-    'agendamentos',
-    'pacientes',
-    'lembretes'
-  ],
-  patient: [
-    'paciente',
-    'agendamentos',
-    'lembretes'
-  ]
-};
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
+  const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
-  
-  // Ignore Next.js internal routes and API routes
-  if (
-    pathname.startsWith('/_next') || 
-    pathname.startsWith('/api') || 
-    pathname.includes('favicon.ico')
-  ) {
+  const clinicSlug = pathname.split('/')[1];
+
+  console.log('Middleware - Path:', pathname, 'Token:', !!token);
+
+  // Public paths that don't require authentication
+  const publicPaths = ['/_next', '/api', '/favicon.ico', '/images'];
+  if (publicPaths.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
-  const segments = pathname.split('/');
-  const slug = segments[1];
-  const currentPath = segments[2];
-
-  // If no slug, allow access
-  if (!slug) {
-    return NextResponse.next();
+  // Root path handling
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Ajusta os caminhos públicos para incluir o slug
-  const adjustedPublicPaths = PUBLIC_PATHS.map(path => `/${slug}${path}`);
-
-  // Permite acesso aos caminhos públicos
-  if (adjustedPublicPaths.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  const authCookie = request.cookies.get('auth_token');
-
-  // Checa autenticação para rotas protegidas
-  if (!authCookie) {
-    return NextResponse.redirect(new URL(`/${slug}/login`, request.url));
-  }
-
-  try {
-    const { user, clinicSlug, timestamp } = JSON.parse(authCookie.value);
-    const isSessionValid = Date.now() - timestamp < SESSION_TIMEOUT;
-
-    // Check if user is trying to access a different clinic
-    if (clinicSlug && clinicSlug !== slug) {
+  // Login page handling
+  if (pathname === '/login') {
+    if (token) {
       return NextResponse.redirect(new URL(`/${clinicSlug}/dashboard`, request.url));
     }
-
-    if (!isSessionValid) {
-      const response = NextResponse.redirect(new URL(`/${slug}/login`, request.url));
-      response.cookies.delete('auth_token');
-      return response;
-    }
-
-    // Verifica se o usuário tem acesso à rota atual
-    const allowedPaths = ROLE_ACCESS[user.role as keyof typeof ROLE_ACCESS] || [];
-    if (currentPath && !allowedPaths.includes(currentPath)) {
-      return NextResponse.redirect(new URL(`/${slug}/unauthorized`, request.url));
-    }
-
     return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware error:', error);
-    const response = NextResponse.redirect(new URL(`/${slug}/login`, request.url));
-    response.cookies.delete('auth_token');
-    return response;
   }
+
+  // Protected routes handling
+  if (pathname.includes('/dashboard')) {
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
@@ -110,4 +50,4 @@ export const config = {
      */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-};
+}

@@ -1,42 +1,38 @@
-'use client';
+"use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService, LoginDto, AuthResponse } from '@/app/services/auth';
+import { api, authService } from '@/services/api';
 import Cookies from 'js-cookie';
+import type { User } from '../types';
 
 interface AdminAuthContextType {
-  user: AuthResponse['user'] | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  user: User | null;
+  isAuthenticated: boolean;
   error: string | null;
-  validationErrors: Record<string, string[]> | null;
+  validationErrors: Record<string, string[]>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
   clearErrors: () => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthResponse['user'] | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string[]> | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const router = useRouter();
 
   useEffect(() => {
-    // Check for existing admin token and fetch user profile
-    const token = Cookies.get('adminToken');
+    const token = Cookies.get('admin_token');
     if (token) {
       authService.getProfile()
-        .then(profile => {
-          if (profile.role === 'admin') {
-            setUser(profile);
-          } else {
-            Cookies.remove('adminToken');
-            setUser(null);
-          }
+        .then(userData => {
+          setUser(userData);
         })
         .catch(() => {
-          Cookies.remove('adminToken');
+          Cookies.remove('admin_token');
           setUser(null);
         });
     }
@@ -45,60 +41,52 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setError(null);
-      setValidationErrors(null);
+      setValidationErrors({});
       
       const response = await authService.adminLogin({ email, password });
       
-      if (response.user.role !== 'admin') {
-        setError('Acesso não autorizado. Esta área é restrita para administradores.');
-        throw new Error('Unauthorized');
+      if (response.access_token) {
+        Cookies.set('admin_token', response.access_token);
+        setUser(response.user);
+        router.push('/admin/dashboard');
       }
-      
-      // Store admin token in cookies
-      Cookies.set('adminToken', response.access_token, { secure: true });
-      setUser(response.user);
-      
     } catch (err: any) {
-      if (err.response?.data?.message) {
-        if (typeof err.response.data.message === 'string') {
-          setError(err.response.data.message);
-        } else if (Array.isArray(err.response.data.message)) {
-          setValidationErrors(
-            err.response.data.message.reduce((acc: Record<string, string[]>, curr: any) => {
-              if (typeof curr.property === 'string' && curr.constraints && typeof curr.constraints === 'object') {
-                const constraintEntries = Object.entries(curr.constraints);
-                if (constraintEntries.length > 0) {
-                  const [, error] = constraintEntries[0];
-                  if (typeof error === 'string') {
-                    const property = curr.property as string;
-                    acc[property] = [...(acc[property] || []), error];
-                  }
-                }
-              }
-              return acc;
-            }, {} as Record<string, string[]>)
-          );
-        }
+      if (err.response?.status === 422) {
+        setValidationErrors(err.response.data.errors || {});
       } else {
-        setError('Erro ao fazer login. Por favor, tente novamente.');
+        setError(err.response?.data?.message || 'An error occurred during login');
       }
       throw err;
     }
   };
 
-  const logout = () => {
-    Cookies.remove('adminToken');
-    setUser(null);
-    router.push('/admin/login');
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      Cookies.remove('admin_token');
+      setUser(null);
+      router.push('/admin/login');
+    }
   };
 
   const clearErrors = () => {
     setError(null);
-    setValidationErrors(null);
+    setValidationErrors({});
   };
 
   return (
-    <AdminAuthContext.Provider value={{ user, login, logout, error, validationErrors, clearErrors }}>
+    <AdminAuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      error,
+      validationErrors,
+      login,
+      logout,
+      clearErrors
+    }}>
       {children}
     </AdminAuthContext.Provider>
   );

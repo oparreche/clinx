@@ -5,36 +5,26 @@ import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 import { FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 import { Payment } from '../types/payment';
 import PaymentColumn from './PaymentColumn';
+import { Transacao } from '../types';
 
-const initialPayments: Payment[] = [
-  {
-    id: 1,
-    patient: 'Carlos Silva',
-    service: 'Consulta Psicológica',
-    value: 150.00,
-    dueDate: '2024-01-15',
-    status: 'pending'
-  },
-  {
-    id: 2,
-    patient: 'Maria Santos',
-    service: 'Avaliação Psicológica',
-    value: 300.00,
-    dueDate: '2024-01-10',
-    status: 'paid'
-  },
-  {
-    id: 3,
-    patient: 'João Costa',
-    service: 'Terapia em Grupo',
-    value: 80.00,
-    dueDate: '2024-01-20',
-    status: 'canceled'
-  }
-];
+interface PaymentTrackingProps {
+  transacoes: Transacao[];
+}
 
-export default function PaymentTracking() {
-  const [payments, setPayments] = useState<Payment[]>(initialPayments);
+export default function PaymentTracking({ transacoes }: PaymentTrackingProps) {
+  // Convert transacoes to Payment type
+  const convertTransacoesToPayments = (transacoes: Transacao[]): Payment[] => {
+    return transacoes.map(t => ({
+      id: t.id,
+      patient: t.descricao,
+      service: t.categoria,
+      value: t.valor,
+      dueDate: t.vencimento || t.data,
+      status: t.status === 'pago' ? 'paid' : t.status === 'pendente' ? 'pending' : 'canceled'
+    }));
+  };
+
+  const [payments, setPayments] = useState<Payment[]>(convertTransacoesToPayments(transacoes));
 
   const getPaymentsByStatus = (status: Payment['status']) => 
     payments.filter(p => p.status === status);

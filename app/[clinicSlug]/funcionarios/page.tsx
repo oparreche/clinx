@@ -5,7 +5,6 @@ import { FaUserPlus, FaFilter } from 'react-icons/fa';
 import { Funcionario } from './types';
 import FuncionarioTable from './components/FuncionarioTable';
 import FuncionarioForm from './components/FuncionarioForm';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 
 const initialFuncionarios: Funcionario[] = [
   {
@@ -106,9 +105,9 @@ export default function Funcionarios() {
     });
 
   return (
-    <AuthenticatedLayout>
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
+    <>
+      <div className="p-4 pt-24 space-y-4">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Funcionários</h1>
           <div className="flex space-x-4">
             <button
@@ -183,6 +182,6 @@ export default function Funcionarios() {
           onSubmit={handleAddFuncionario}
         />
       )}
-    </AuthenticatedLayout>
+    </>
   );
 }

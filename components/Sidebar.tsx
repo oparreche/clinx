@@ -1,9 +1,8 @@
 'use client';
 
-import { mockAppointments } from '@/app/data/mockAppointments';
 import { Appointment } from '@/types/appointment';
-import { Doctor } from '@/app/services/doctorService';
-import { Patient } from '@/app/services/patientService';
+import { Doctor } from '@/services/doctorService';
+import { Patient } from '@/services/patientService';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
@@ -30,7 +29,14 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ onCollapse }: SidebarProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    // Initialize from localStorage if available, otherwise false
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      return savedState ? savedState === 'true' : false;
+    }
+    return false;
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -60,6 +66,7 @@ const Sidebar = ({ onCollapse }: SidebarProps) => {
     const newCollapsed = !isCollapsed;
     setIsCollapsed(newCollapsed);
     onCollapse?.(newCollapsed);
+    localStorage.setItem('sidebarCollapsed', newCollapsed.toString());
   };
 
   const isActiveLink = (href: string) => pathname.startsWith(href);

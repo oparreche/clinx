@@ -1,17 +1,23 @@
-import { Tenant } from '../types/tenant';
-
-export type UserRole = 'admin' | 'patient' | 'doctor';
+export type UserRole = 'admin' | 'psicologo' | 'secretaria';
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: UserRole;
+  clinicSlug?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
+  clinicSlug: string;  
 }
 
 export interface RegisterData {
@@ -19,18 +25,15 @@ export interface RegisterData {
   email: string;
   password: string;
   role: UserRole;
+  clinicSlug?: string;
 }
 
-export interface AuthState {
+export interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  error: string | null;
-  tenant: Tenant | null;
-  slug: string | null;
-}
-
-export interface TenantContext {
-  tenant: Tenant | null;
-  setTenant: (tenant: Tenant | null) => void;
-  isLoading: boolean;
+  clinicSlug?: string;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
 }

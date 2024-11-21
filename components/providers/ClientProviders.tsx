@@ -1,18 +1,14 @@
 'use client';
 
 import { AuthProvider } from '@/app/auth/context/AuthContext';
-import { TenantProvider } from '@/app/tenant/context/TenantContext';
+import { AdminAuthProvider } from '@/app/auth/context/AdminAuthContext';
 
-export default function ClientProviders({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
-    <TenantProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <AdminAuthProvider>
         {children}
-      </AuthProvider>
-    </TenantProvider>
+      </AdminAuthProvider>
+    </AuthProvider>
   );
 }

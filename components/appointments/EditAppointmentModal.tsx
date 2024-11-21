@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Appointment, AppointmentStatus, appointmentStatusMap } from '@/types/appointment';
-import { Doctor } from '@/app/services/doctorService';
-import { Patient } from '@/app/services/patientService';
+import { Doctor } from '@/services/doctorService';
+import { Patient } from '@/services/patientService';
 
 interface EditAppointmentModalProps {
   isOpen: boolean;

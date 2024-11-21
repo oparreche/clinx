@@ -1,8 +1,7 @@
-import api from './api';
+import api from '@/services/api';
 
 export interface Doctor {
   id: number;
-  clinic_id: number;
   name: string;
   email: string;
   phone: string;
@@ -11,31 +10,43 @@ export interface Doctor {
   available_days?: string[];
   available_hours?: string[];
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDoctorDTO {
+  name: string;
+  email: string;
+  phone: string;
+  specialization: string;
+  crm: string;
+  available_days?: string[];
+  available_hours?: string[];
 }
 
 class DoctorService {
-  async getDoctors(clinicSlug: string) {
-    const response = await api.get<Doctor[]>(`/clinics/${clinicSlug}/doctors`);
+  async getDoctors(clinicSlug: string): Promise<Doctor[]> {
+    const response = await api.get<Doctor[]>(`/api/clinics/${clinicSlug}/doctors`);
     return response.data;
   }
 
-  async getDoctor(clinicSlug: string, id: number) {
-    const response = await api.get<Doctor>(`/clinics/${clinicSlug}/doctors/${id}`);
+  async getDoctor(clinicSlug: string, id: number): Promise<Doctor> {
+    const response = await api.get<Doctor>(`/api/clinics/${clinicSlug}/doctors/${id}`);
     return response.data;
   }
 
-  async createDoctor(clinicSlug: string, data: Partial<Doctor>) {
-    const response = await api.post<Doctor>(`/clinics/${clinicSlug}/doctors`, data);
+  async createDoctor(clinicSlug: string, data: CreateDoctorDTO): Promise<Doctor> {
+    const response = await api.post<Doctor>(`/api/clinics/${clinicSlug}/doctors`, data);
     return response.data;
   }
 
-  async updateDoctor(clinicSlug: string, id: number, data: Partial<Doctor>) {
-    const response = await api.put<Doctor>(`/clinics/${clinicSlug}/doctors/${id}`, data);
+  async updateDoctor(clinicSlug: string, id: number, data: Partial<CreateDoctorDTO>): Promise<Doctor> {
+    const response = await api.put<Doctor>(`/api/clinics/${clinicSlug}/doctors/${id}`, data);
     return response.data;
   }
 
-  async deleteDoctor(clinicSlug: string, id: number) {
-    await api.delete(`/clinics/${clinicSlug}/doctors/${id}`);
+  async deleteDoctor(clinicSlug: string, id: number): Promise<void> {
+    await api.delete(`/api/clinics/${clinicSlug}/doctors/${id}`);
   }
 }
 

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import doctorService, { Doctor } from '@/app/services/doctorService';
-import patientService, { Patient } from '@/app/services/patientService';
+import doctorService, { Doctor } from '@/services/doctorService';
+import patientService, { Patient } from '@/services/patientService';
 import { useParams } from 'next/navigation';
 
 interface NewAppointmentModalProps {

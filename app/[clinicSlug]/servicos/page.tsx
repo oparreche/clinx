@@ -5,8 +5,6 @@ import { FaPlus, FaFilter } from 'react-icons/fa';
 import { Servico } from './types';
 import ServicoCard from './components/ServicoCard';
 import ServicoForm from './components/ServicoForm';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
-
 
 const initialServicos: Servico[] = [
   {
@@ -77,9 +75,9 @@ export default function Servicos() {
   );
 
   return (
-    <AuthenticatedLayout>
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
+    <>
+      <div className="p-4 pt-24 space-y-4">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Serviços</h1>
           <div className="flex space-x-4">
             <button
@@ -144,13 +142,13 @@ export default function Servicos() {
             />
           ))}
         </div>
-
-        <ServicoForm
-          isOpen={showForm}
-          onClose={() => setShowForm(false)}
-          onSubmit={handleAddServico}
-        />
       </div>
-    </AuthenticatedLayout>
+
+      <ServicoForm
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        onSubmit={handleAddServico}
+      />
+    </>
   );
 }

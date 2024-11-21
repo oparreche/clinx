@@ -6,8 +6,6 @@ import { Lembrete } from './types';
 import LembreteCard from './components/LembreteCard';
 import LembreteForm from './components/LembreteForm';
 import LembreteFilters from './components/LembreteFilters';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
-
 
 const initialLembretes: Lembrete[] = [
   {
@@ -101,9 +99,9 @@ export default function Lembretes() {
     });
 
   return (
-    <AuthenticatedLayout>
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
+    <>
+      <div className="p-4 pt-24 space-y-4">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Lembretes</h1>
           <div className="flex space-x-4">
             <button
@@ -124,24 +122,16 @@ export default function Lembretes() {
         </div>
 
         <div className="mb-6">
-          <div className="flex space-x-4 mb-4">
-            <input
-              type="text"
-              placeholder="Buscar lembrete..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-            />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'data' | 'prioridade')}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="data">Ordenar por Data</option>
-              <option value="prioridade">Ordenar por Prioridade</option>
-            </select>
-          </div>
+          <input
+            type="text"
+            placeholder="Buscar lembrete..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          />
+        </div>
 
+        <div>
           {showFilters && (
             <LembreteFilters
               prioridade={filterPrioridade}
@@ -165,13 +155,13 @@ export default function Lembretes() {
             />
           ))}
         </div>
-
-        <LembreteForm
-          isOpen={showForm}
-          onClose={() => setShowForm(false)}
-          onSubmit={handleAddLembrete}
-        />
       </div>
-    </AuthenticatedLayout>
+
+      <LembreteForm
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        onSubmit={handleAddLembrete}
+      />
+    </>
   );
 }

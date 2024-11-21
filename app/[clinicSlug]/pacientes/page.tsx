@@ -5,7 +5,6 @@ import { FaUserPlus, FaFilter } from 'react-icons/fa';
 import { Paciente } from './types';
 import PacienteTable from './components/PacienteTable';
 import PacienteForm from './components/PacienteForm';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 
 const initialPacientes: Paciente[] = [
   {
@@ -84,77 +83,73 @@ export default function Pacientes() {
     });
 
   return (
-    <AuthenticatedLayout>
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Pacientes</h1>
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border border-gray-300 rounded-lg flex items-center space-x-2 hover:bg-gray-50"
-            >
-              <FaFilter />
-              <span>Filtros</span>
-            </button>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-600"
-            >
-              <FaUserPlus />
-              <span>Novo Paciente</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="p-4 border-b">
-            <input
-              type="text"
-              placeholder="Buscar por nome, email ou CPF..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-
-          {showFilters && (
-            <div className="p-4 border-b bg-gray-50 flex space-x-4">
-              <select
-                value={filterPsicologo}
-                onChange={(e) => setFilterPsicologo(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todos os Psicólogos</option>
-                <option value="Dr. Almeida">Dr. Almeida</option>
-                <option value="Dra. Santos">Dra. Santos</option>
-              </select>
-
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Todos os Status</option>
-                <option value="Ativo">Ativo</option>
-                <option value="Inativo">Inativo</option>
-              </select>
-            </div>
-          )}
-
-          <PacienteTable
-            pacientes={filteredPacientes}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
+    <div className="p-4 pt-24 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center space-x-4">
+          <input
+            type="text"
+            placeholder="Buscar pacientes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              showFilters
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <FaFilter className="w-4 h-4" />
+            <span>Filtros</span>
+          </button>
         </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md"
+        >
+          <FaUserPlus className="w-4 h-4" />
+          <span>Novo Paciente</span>
+        </button>
       </div>
+
+      {showFilters && (
+        <div className="bg-gray-50 p-4 rounded-lg space-y-4 mb-6">
+          <select
+            value={filterPsicologo}
+            onChange={(e) => setFilterPsicologo(e.target.value)}
+            className="px-4 py-2 border rounded-lg"
+          >
+            <option value="">Todos os Psicólogos</option>
+            <option value="Dr. Almeida">Dr. Almeida</option>
+            <option value="Dra. Santos">Dra. Santos</option>
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 border rounded-lg"
+          >
+            <option value="">Todos os Status</option>
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+      )}
+
+      <PacienteTable
+        pacientes={filteredPacientes}
+        onSort={handleSort}
+        sortField={sortField}
+        sortDirection={sortDirection}
+      />
 
       <PacienteForm
         isOpen={showForm}
         onClose={() => setShowForm(false)}
         onSubmit={handleAddPaciente}
       />
-    </AuthenticatedLayout>
+    </div>
   );
 }

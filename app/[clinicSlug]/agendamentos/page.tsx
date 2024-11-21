@@ -13,7 +13,6 @@ import { FaCalendarAlt, FaList, FaPlus, FaFilter } from 'react-icons/fa';
 import appointmentService, { Appointment, CreateAppointmentDTO } from '@/services/appointmentService';
 import doctorService, { Doctor } from '@/services/doctorService';
 import patientService, { Patient } from '@/services/patientService';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import NewAppointmentModal from '@/components/appointments/NewAppointmentModal';
 import EditAppointmentModal from '@/components/appointments/EditAppointmentModal';
 import AppointmentList from '@/components/appointments/AppointmentList';
@@ -47,17 +46,28 @@ function AgendamentosContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!clinicSlug || !user) return;
+      if (!clinicSlug || !user) {
+        console.log('Missing required data:', { clinicSlug, user });
+        return;
+      }
       
       setIsLoading(true);
       setError(null);
       
       try {
+        console.log('Loading appointments data for clinic:', clinicSlug);
+        
         const [appointmentsData, doctorsData, patientsData] = await Promise.all([
           appointmentService.getAppointments(clinicSlug),
           doctorService.getDoctors(clinicSlug),
           patientService.getPatients(clinicSlug),
         ]);
+
+        console.log('Data loaded successfully:', {
+          appointments: appointmentsData.length,
+          doctors: doctorsData.length,
+          patients: patientsData.length
+        });
 
         // Transform appointments for calendar
         const calendarEventsData = appointmentsData.map(appointment => ({
@@ -84,6 +94,19 @@ function AgendamentosContent() {
       } catch (err: any) {
         console.error('Error loading appointments:', err);
         setError(err.response?.data?.message || 'Erro ao carregar os agendamentos');
+        
+        // Log detalhado do erro
+        if (err.response) {
+          console.error('Error response:', {
+            status: err.response.status,
+            data: err.response.data,
+            headers: err.response.headers
+          });
+        } else if (err.request) {
+          console.error('Error request:', err.request);
+        } else {
+          console.error('Error message:', err.message);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -94,6 +117,8 @@ function AgendamentosContent() {
 
   // Aplicar filtros aos agendamentos
   useEffect(() => {
+    console.log('Applying filters:', filters);
+    
     let filtered = [...appointments];
 
     if (filters.doctor) {
@@ -111,6 +136,11 @@ function AgendamentosContent() {
     if (filters.endDate && filters.endDate !== '') {
       filtered = filtered.filter(app => new Date(app.start_time) <= new Date(filters.endDate));
     }
+
+    console.log('Filtered appointments:', {
+      total: appointments.length,
+      filtered: filtered.length
+    });
 
     setFilteredAppointments(filtered);
   }, [filters, appointments]);
@@ -136,6 +166,8 @@ function AgendamentosContent() {
     if (appointment) {
       setSelectedAppointment(appointment);
       setIsModalOpen(true);
+    } else {
+      console.error('Appointment not found:', appointmentId);
     }
   };
 
@@ -145,12 +177,17 @@ function AgendamentosContent() {
   };
 
   const handleCreateAppointment = async (data: CreateAppointmentDTO) => {
-    if (!clinicSlug) return;
+    if (!clinicSlug) {
+      console.error('Missing clinic slug');
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('Creating appointment:', data);
+      
       const formatDate = (date: string) => date.replace('T', ' ').replace('.000Z', '');
 
       const newAppointment = await appointmentService.createAppointment(clinicSlug, {
@@ -162,6 +199,8 @@ function AgendamentosContent() {
         notes: data.notes
       });
 
+      console.log('Appointment created:', newAppointment);
+      
       setAppointments(prev => [...prev, newAppointment]);
       setIsNewModalOpen(false);
     } catch (err: any) {
@@ -173,13 +212,21 @@ function AgendamentosContent() {
   };
 
   const handleUpdateAppointment = async (id: number, data: any) => {
-    if (!clinicSlug) return;
+    if (!clinicSlug) {
+      console.error('Missing clinic slug');
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('Updating appointment:', { id, data });
+      
       const updatedAppointment = await appointmentService.updateAppointment(clinicSlug, id, data);
+      
+      console.log('Appointment updated:', updatedAppointment);
+      
       setAppointments(prev => prev.map(a => a.id === id ? updatedAppointment : a));
       setIsModalOpen(false);
     } catch (err: any) {
@@ -191,13 +238,20 @@ function AgendamentosContent() {
   };
 
   const handleDeleteAppointment = async (id: number) => {
-    if (!clinicSlug || !window.confirm('Tem certeza que deseja excluir este agendamento?')) return;
+    if (!clinicSlug || !window.confirm('Tem certeza que deseja excluir este agendamento?')) {
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('Deleting appointment:', id);
+      
       await appointmentService.deleteAppointment(clinicSlug, id);
+      
+      console.log('Appointment deleted successfully');
+      
       setAppointments(prev => prev.filter(a => a.id !== id));
       setIsModalOpen(false);
     } catch (err: any) {
@@ -222,55 +276,62 @@ function AgendamentosContent() {
         <div className="text-red-500 text-center">
           <h3 className="text-lg font-semibold">Erro ao carregar agendamentos</h3>
           <p>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Header com botões de ação */}
-      <div className="flex justify-between items-center bg-white rounded-lg shadow p-4">
-        <div className="flex space-x-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center space-x-4">
           <button
             onClick={() => setActiveView('calendar')}
-            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-              activeView === 'calendar' 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 hover:bg-gray-200'
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              activeView === 'calendar'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <FaCalendarAlt className="text-lg" />
+            <FaCalendarAlt className="w-4 h-4" />
             <span>Calendário</span>
           </button>
           <button
             onClick={() => setActiveView('list')}
-            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-              activeView === 'list' 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 hover:bg-gray-200'
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              activeView === 'list'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <FaList className="text-lg" />
+            <FaList className="w-4 h-4" />
             <span>Lista</span>
           </button>
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex space-x-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors
-              ${showFilters ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 hover:bg-gray-200'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              showFilters
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
-            <FaFilter className="text-lg" />
+            <FaFilter className="w-4 h-4" />
             <span>Filtros</span>
           </button>
           <button
             onClick={() => setIsNewModalOpen(true)}
-            className="px-4 py-2 rounded-lg bg-blue-500 text-white flex items-center space-x-2 
-              hover:bg-blue-600 transition-colors shadow-md"
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md"
           >
-            <FaPlus className="text-lg" />
+            <FaPlus className="w-4 h-4" />
             <span>Novo Agendamento</span>
           </button>
         </div>
@@ -376,10 +437,10 @@ function AgendamentosContent() {
 
 export default function AgendamentosPage() {
   return (
-    <AuthenticatedLayout>
-      <Suspense fallback={<div>Carregando...</div>}>
+    <Suspense fallback={<div>Carregando...</div>}>
+      <div className="p-4 pt-24 space-y-4">
         <AgendamentosContent />
-      </Suspense>
-    </AuthenticatedLayout>
+      </div>
+    </Suspense>
   );
 }

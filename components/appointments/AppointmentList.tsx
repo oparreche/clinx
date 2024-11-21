@@ -44,6 +44,43 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, onSelec
     }
   };
 
+  const formatDateTime = (dateTimeString: string) => {
+    try {
+      const date = new Date(dateTimeString);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateTimeString);
+        return 'Data inválida';
+      }
+      return format(date, 'dd/MM/yyyy', { locale: ptBR });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Data inválida';
+    }
+  };
+
+  const formatTime = (dateTimeString: string) => {
+    try {
+      const date = new Date(dateTimeString);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid time:', dateTimeString);
+        return '--:--';
+      }
+      return format(date, 'HH:mm');
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '--:--';
+    }
+  };
+
+  if (!Array.isArray(appointments)) {
+    console.error('Invalid appointments data:', appointments);
+    return (
+      <div className="p-8 text-center text-red-600">
+        <p>Erro ao carregar os agendamentos. Por favor, tente novamente.</p>
+      </div>
+    );
+  }
+
   if (appointments.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -93,10 +130,10 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, onSelec
                     <FaClock className="flex-shrink-0 h-4 w-4 text-gray-400 mr-2" />
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {format(new Date(appointment.start_time), 'dd/MM/yyyy', { locale: ptBR })}
+                        {formatDateTime(appointment.start_time)}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {format(new Date(appointment.start_time), 'HH:mm')} - {format(new Date(appointment.end_time), 'HH:mm')}
+                        {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                       </div>
                     </div>
                   </div>
@@ -105,7 +142,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, onSelec
                   <div className="flex items-center">
                     <FaUser className="flex-shrink-0 h-4 w-4 text-gray-400 mr-2" />
                     <div className="text-sm font-medium text-gray-900">
-                      {appointment.patient?.name}
+                      {appointment.patient?.name || 'Paciente não encontrado'}
                     </div>
                   </div>
                 </td>
@@ -113,7 +150,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({ appointments, onSelec
                   <div className="flex items-center">
                     <FaUserMd className="flex-shrink-0 h-4 w-4 text-gray-400 mr-2" />
                     <div className="text-sm font-medium text-gray-900">
-                      {appointment.doctor?.name}
+                      {appointment.doctor?.name || 'Médico não encontrado'}
                     </div>
                   </div>
                 </td>
