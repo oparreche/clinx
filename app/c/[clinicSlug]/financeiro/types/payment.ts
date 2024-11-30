@@ -4,5 +4,6 @@ export interface Payment {
   service: string;
   value: number;
   dueDate: string;
-  status: 'pending' | 'paid' | 'canceled';
+  status: 'pending' | 'completed' | 'reconciled';
+  linkedPayments: number[];
 }

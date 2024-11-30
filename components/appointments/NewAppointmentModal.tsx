@@ -10,13 +10,13 @@ import { useParams } from 'next/navigation';
 interface NewAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (appointment: any) => void;
+  onSubmit: (appointment: AppointmentPayload) => void;
   selectedDate?: Date | null;
   doctors: Doctor[];
   patients: Patient[];
 }
 
-type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly';
+type RecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'monthly';
 
 interface FormData {
   patient_id: string;
@@ -25,12 +25,30 @@ interface FormData {
   time: string;
   duration: string;
   notes: string;
-  status: string;
+  room: string;
   recurrence: {
-    type: RecurrenceType;
+    type: RecurrenceFrequency;
     interval: number;
     endDate: string;
     daysOfWeek: number[];
+    dayOfMonth?: number;
+    occurrences?: number;
+  };
+}
+
+export interface AppointmentPayload {
+  doctor_id: number;
+  patient_id: number;
+  date: string;
+  start_time: string;
+  end_time: string;
+  notes?: string;
+  recurrence?: {
+    type: 'none' | 'daily' | 'weekly' | 'monthly';
+    interval?: number;
+    daysOfWeek?: number[];
+    endDate?: string;
+    occurrences?: number;
   };
 }
 
@@ -55,7 +73,7 @@ export default function NewAppointmentModal({
     time: '',
     duration: '30',
     notes: '',
-    status: 'scheduled',
+    room: '',
     recurrence: {
       type: 'none',
       interval: 1,
@@ -87,8 +105,50 @@ export default function NewAppointmentModal({
     fetchData();
   }, [isOpen, clinicSlug, initialDoctors, initialPatients]);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Criar data de início no formato ISO 8601
+    const appointmentDate = new Date(formData.date);
+    const [hours, minutes] = formData.time.split(':');
+    appointmentDate.setHours(parseInt(hours), parseInt(minutes));
+    
+    // Criar data de fim
+    const endDate = new Date(appointmentDate);
+    endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
+
+    // Formatar horários no formato HH:mm
+    const formatTime = (date: Date) => {
+      return date.toTimeString().split(' ')[0].substring(0, 5);
+    };
+
+    const appointment: AppointmentPayload = {
+      doctor_id: parseInt(formData.doctor_id),
+      patient_id: parseInt(formData.patient_id),
+      date: formData.date,
+      start_time: formatTime(appointmentDate),
+      end_time: formatTime(endDate),
+      notes: formData.notes || undefined
+    };
+
+    // Adicionar dados de recorrência apenas se não for 'none'
+    if (formData.recurrence.type !== 'none') {
+      appointment.recurrence = {
+        type: formData.recurrence.type,
+        interval: formData.recurrence.interval,
+        endDate: formData.recurrence.endDate,
+        daysOfWeek: formData.recurrence.type === 'weekly' ? formData.recurrence.daysOfWeek : undefined
+      };
+    } else {
+      appointment.recurrence = { type: 'none' };
+    }
+
+    onSubmit(appointment);
+    onClose();
+  };
+
   const handleRecurrenceTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const type = e.target.value as RecurrenceType;
+    const type = e.target.value as RecurrenceFrequency;
     setFormData(prev => ({
       ...prev,
       recurrence: {
@@ -114,28 +174,6 @@ export default function NewAppointmentModal({
         }
       };
     });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const [hours, minutes] = formData.time.split(':');
-    const appointmentDate = new Date(formData.date);
-    appointmentDate.setHours(parseInt(hours), parseInt(minutes));
-
-    const endDate = new Date(appointmentDate);
-    endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
-
-    const appointment = {
-      ...formData,
-      doctor_id: parseInt(formData.doctor_id),
-      patient_id: parseInt(formData.patient_id),
-      status: 'scheduled',
-      start_time: appointmentDate.toISOString(),
-      end_time: endDate.toISOString(),
-    };
-
-    onSubmit(appointment);
-    onClose();
   };
 
   return (
@@ -257,6 +295,18 @@ export default function NewAppointmentModal({
                 rows={3}
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Sala
+              </label>
+              <input
+                type="text"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
+                value={formData.room}
+                onChange={(e) => setFormData({ ...formData, room: e.target.value })}
               />
             </div>
 

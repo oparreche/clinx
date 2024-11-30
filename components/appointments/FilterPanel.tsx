@@ -1,6 +1,9 @@
 import React from 'react';
 import { Doctor } from '@/services/doctorService';
 import { Patient } from '@/services/patientService';
+import { appointmentStatusMap } from '@/types/appointment';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 interface FilterPanelProps {
   doctors: Doctor[];
@@ -9,8 +12,8 @@ interface FilterPanelProps {
     doctor: string;
     patient: string;
     status: string;
-    startDate: string | null;
-    endDate: string | null;
+    startDate: Date | null;
+    endDate: Date | null;
   };
   onFilterChange: (filters: any) => void;
 }
@@ -21,7 +24,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   onFilterChange,
 }) => {
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     onFilterChange({ ...filters, [field]: value });
   };
 
@@ -36,7 +39,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 bg-white p-4 rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium text-gray-900">Filtros</h3>
         <button
@@ -100,39 +103,42 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
           >
             <option value="">Todos os status</option>
-            <option value="scheduled">Agendado</option>
-            <option value="confirmed">Confirmado</option>
-            <option value="completed">Concluído</option>
-            <option value="cancelled">Cancelado</option>
-            <option value="no_show">Não compareceu</option>
+            {Object.entries(appointmentStatusMap).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Data Inicial
           </label>
-          <input
-            type="date"
-            id="startDate"
-            value={filters.startDate || ''}
-            onChange={(e) => handleChange('startDate', e.target.value)}
+          <DatePicker
+            selected={filters.startDate || null}
+            onChange={(date) => handleChange('startDate', date)}
+            dateFormat="dd/MM/yyyy"
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none 
               focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            placeholderText="Selecione a data inicial"
+            isClearable
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             Data Final
           </label>
-          <input
-            type="date"
-            id="endDate"
-            value={filters.endDate || ''}
-            onChange={(e) => handleChange('endDate', e.target.value)}
+          <DatePicker
+            selected={filters.endDate || null}
+            onChange={(date) => handleChange('endDate', date)}
+            dateFormat="dd/MM/yyyy"
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none 
               focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            placeholderText="Selecione a data final"
+            minDate={filters.startDate || undefined}
+            isClearable
           />
         </div>
       </div>

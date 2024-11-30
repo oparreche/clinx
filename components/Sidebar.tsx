@@ -6,7 +6,7 @@ import { Patient } from '@/services/patientService';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
-import { useAuth } from '@/app/auth/context/AuthContext';
+import { useAuth } from '@/auth/context/AuthContext';
 import {
   FaHome,
   FaUserMd,
@@ -22,7 +22,7 @@ import {
   FaStethoscope,
   FaPlus,
 } from 'react-icons/fa';
-import NewAppointmentModal from './appointments/NewAppointmentModal';
+import NewAppointmentModal, { AppointmentPayload } from './appointments/NewAppointmentModal';
 
 interface SidebarProps {
   onCollapse?: (collapsed: boolean) => void;
@@ -50,15 +50,15 @@ const Sidebar = ({ onCollapse }: SidebarProps) => {
     if (!clinicSlug) return [];
 
     return [
-      { icon: FaHome, label: 'Dashboard', href: `/${clinicSlug}/dashboard` },
-      { icon: FaCalendarAlt, label: 'Agendamentos', href: `/${clinicSlug}/agendamentos` },
-      { icon: FaUserMd, label: 'Psicólogos', href: `/${clinicSlug}/psicologos` },
-      { icon: FaUsers, label: 'Pacientes', href: `/${clinicSlug}/pacientes` },
-      { icon: FaUserTie, label: 'Funcionários', href: `/${clinicSlug}/funcionarios` },
-      { icon: FaListAlt, label: 'Serviços', href: `/${clinicSlug}/servicos` },
-      { icon: FaStickyNote, label: 'Lembretes', href: `/${clinicSlug}/lembretes` },
-      { icon: FaMoneyBillWave, label: 'Financeiro', href: `/${clinicSlug}/financeiro` },
-      { icon: FaCog, label: 'Configurações', href: `/${clinicSlug}/configuracoes` },
+      { icon: FaHome, label: 'Dashboard', href: `/c/${clinicSlug}/dashboard` },
+      { icon: FaCalendarAlt, label: 'Agendamentos', href: `/c/${clinicSlug}/agendamentos` },
+      { icon: FaUserMd, label: 'Psicólogos', href: `/c/${clinicSlug}/psicologos` },
+      { icon: FaUsers, label: 'Pacientes', href: `/c/${clinicSlug}/pacientes` },
+      { icon: FaUserTie, label: 'Funcionários', href: `/c/${clinicSlug}/funcionarios` },
+      { icon: FaListAlt, label: 'Serviços', href: `/c/${clinicSlug}/servicos` },
+      { icon: FaStickyNote, label: 'Lembretes', href: `/c/${clinicSlug}/lembretes` },
+      { icon: FaMoneyBillWave, label: 'Financeiro', href: `/c/${clinicSlug}/financeiro` },
+      { icon: FaCog, label: 'Configurações', href: `/c/${clinicSlug}/configuracoes` },
     ];
   }, [clinicSlug]);
 
@@ -75,11 +75,18 @@ const Sidebar = ({ onCollapse }: SidebarProps) => {
     router.push(href);
   };
 
-  const handleAddAppointment = (newAppointment: Omit<Appointment, 'id'>) => {
+  const handleAddAppointment = (appointmentData: AppointmentPayload) => {
     const id = appointments.length + 1;
     const appointment: Appointment = {
-      ...newAppointment,
       id,
+      patient_id: appointmentData.patient_id,
+      doctor_id: appointmentData.doctor_id,
+      start_time: appointmentData.start_time,
+      end_time: appointmentData.end_time,
+      status: 'scheduled',
+      notes: appointmentData.notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     setAppointments([...appointments, appointment]);
     setIsModalOpen(false);

@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuth } from "@/app/auth/context/AuthContext";
+import { useAuth } from "@/auth/context/AuthContext";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authService } from "@/services/api";
-import { LoginCredentials } from "@/app/auth/types";
+import { LoginCredentials } from "@/auth/types";
 import { FaEnvelope, FaLock, FaExclamationCircle, FaSpinner } from 'react-icons/fa';
 import Image from 'next/image';
 
@@ -78,27 +78,29 @@ export default function LoginPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50/90 to-white/90 relative">
                 <div 
-                    className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+                    className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat animate-fade-in"
                     style={{
                         backgroundImage: 'url("/images/medical-bg.jpg")',
                         filter: 'brightness(0.95)'
                     }}
                 />
-                <div className="w-full max-w-[400px] space-y-6 bg-white/95 p-8 rounded-2xl shadow-xl backdrop-blur-sm mx-4">
+                <div className="w-full max-w-[400px] space-y-6 bg-white/95 p-8 rounded-2xl shadow-xl backdrop-blur-sm mx-4 animate-zoom-in">
                     <div className="text-center">
-                        <FaExclamationCircle className="mx-auto h-12 w-12 text-red-500" />
-                        <h2 className="mt-4 text-3xl font-extrabold text-gray-900">
-                            Ops!
-                        </h2>
-                        <p className="mt-2 text-sm text-gray-600">
-                            {error || "Clínica não encontrada. Verifique o endereço e tente novamente."}
-                        </p>
-                        <button
-                            onClick={() => router.push(`/${clinicSlug}`)}
-                            className="mt-6 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-150 hover:scale-105"
-                        >
-                            Voltar para a página inicial
-                        </button>
+                        <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+                            <FaExclamationCircle className="mx-auto h-12 w-12 text-red-500" />
+                            <h2 className="mt-4 text-3xl font-extrabold text-gray-900">
+                                Ops!
+                            </h2>
+                            <p className="mt-2 text-sm text-gray-600">
+                                {error || "Clínica não encontrada. Verifique o endereço e tente novamente."}
+                            </p>
+                            <button
+                                onClick={() => router.push(`/${clinicSlug}`)}
+                                className="mt-6 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-150 hover:scale-105"
+                            >
+                                Voltar para a página inicial
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -108,42 +110,46 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50/90 to-white/90 relative">
             <div 
-                className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+                className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat animate-fade-in"
                 style={{
                     backgroundImage: 'url("/images/medical-bg.jpg")',
                     filter: 'brightness(0.95)'
                 }}
             />
-            <div className="w-full max-w-[400px] space-y-6 bg-white/95 p-8 rounded-2xl shadow-xl backdrop-blur-sm mx-4">
+            <div className="w-full max-w-[400px] space-y-6 bg-white/95 p-8 rounded-2xl shadow-xl backdrop-blur-sm mx-4 animate-zoom-in">
                 <div className="text-center">
-                    {clinicInfo?.logo ? (
-                        <div className="flex justify-center mb-8">
-                            <Image
-                                src={clinicInfo.logo}
-                                alt="Logo da Clínica"
-                                width={120}
-                                height={120}
-                                className="rounded-full"
-                            />
-                        </div>
-                    ) : (
-                        <div className="h-24 w-24 mx-auto mb-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <span className="text-3xl font-bold text-indigo-600">
-                                {clinicInfo?.name?.[0]?.toUpperCase() || clinicSlug[0]?.toUpperCase()}
-                            </span>
-                        </div>
-                    )}
-                    <h2 className="text-2xl font-bold text-gray-900">
-                        {clinicInfo?.name || "Bem-vindo(a)"}
-                    </h2>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Entre com suas credenciais para acessar o sistema
-                    </p>
+                    <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+                        {clinicInfo?.logo ? (
+                            <div className="flex justify-center mb-8">
+                                <Image
+                                    src={clinicInfo.logo}
+                                    alt="Logo da Clínica"
+                                    width={120}
+                                    height={120}
+                                    className="rounded-full"
+                                />
+                            </div>
+                        ) : (
+                            <div className="h-24 w-24 mx-auto mb-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <span className="text-3xl font-bold text-indigo-600">
+                                    {clinicInfo?.name?.[0]?.toUpperCase() || clinicSlug[0]?.toUpperCase()}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {clinicInfo?.name || "Bem-vindo(a)"}
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-500">
+                            Entre com suas credenciais para acessar o sistema
+                        </p>
+                    </div>
                 </div>
                 
                 <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-4">
-                        <div>
+                        <div className="animate-slide-in" style={{ animationDelay: '600ms' }}>
                             <div className="relative">
                                 <input
                                     id="email-address"
@@ -151,7 +157,7 @@ export default function LoginPage() {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    className="block w-full px-4 py-3.5 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                                    className="block w-full px-4 py-3.5 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm hover:bg-white/90"
                                     placeholder="Email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -160,7 +166,7 @@ export default function LoginPage() {
                             </div>
                         </div>
                         
-                        <div>
+                        <div className="animate-slide-in" style={{ animationDelay: '800ms' }}>
                             <div className="relative">
                                 <input
                                     id="password"
@@ -168,7 +174,7 @@ export default function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     autoComplete="current-password"
                                     required
-                                    className="block w-full px-4 py-3.5 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                                    className="block w-full px-4 py-3.5 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm hover:bg-white/90"
                                     placeholder="Senha"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -207,13 +213,13 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <div>
+                    <div className="animate-slide-up" style={{ animationDelay: '1000ms' }}>
                         <button
                             type="submit"
                             disabled={isLoading}
                             className={`group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
                                 isLoading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200`}
+                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:scale-[1.02]`}
                         >
                             {isLoading ? (
                                 <FaSpinner className="h-5 w-5 animate-spin" />

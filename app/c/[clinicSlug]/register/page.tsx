@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { FaUser, FaEnvelope, FaLock, FaUserMd } from 'react-icons/fa';
-import { useAuth } from '@/app/auth/context/AuthContext';
-import { UserRole } from '@/app/auth/types';
+import { useAuth } from '@/auth/context/AuthContext';
+import { UserRole } from '@/auth/types';
 
 
 export default function RegisterPage() {

@@ -92,7 +92,7 @@ api.interceptors.response.use(
             
             // Redirect to clinic-specific login page
             if (typeof window !== 'undefined') {
-                const loginPath = clinicSlug ? `/${clinicSlug}/login` : '/login';
+                const loginPath = clinicSlug ? `/c/${clinicSlug}/login` : '/login';
                 console.log('Redirecting to:', loginPath);
                 window.location.href = loginPath;
             }

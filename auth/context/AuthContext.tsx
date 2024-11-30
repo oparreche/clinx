@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
 
       // Navigate to dashboard
-      router.push(`/${credentials.clinicSlug}/dashboard`);
+      router.push(`/c/${credentials.clinicSlug}/dashboard`);
     } catch (error) {
       console.error('Login error:', error);
       handleAuthFailure();
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       setIsAuthenticated(true);
       if (data.clinicSlug) {
-        router.push(`/${data.clinicSlug}/dashboard`);
+        router.push(`/c/${data.clinicSlug}/dashboard`);
       }
     } catch (error) {
       throw error;
@@ -143,8 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Get clinic slug from multiple sources, prioritizing the most recent
       const currentClinicSlug = user?.clinicSlug || 
-                               Cookies.get('clinicSlug') || 
-                               localStorage.getItem('lastClinicSlug');
+            Cookies.get('clinicSlug') || 
+            localStorage.getItem('lastClinicSlug');
       
       // Call logout API
       await authService.logout();
@@ -156,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (currentClinicSlug) {
         // Keep the last clinic slug for future redirects
         localStorage.setItem('lastClinicSlug', currentClinicSlug);
-        router.push(`/${currentClinicSlug}/login`);
+        router.push(`/c/${currentClinicSlug}/login`);
       } else {
         // Fallback to main login only if no clinic slug is found
         console.warn('No clinic slug found during logout, redirecting to main login');
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (clinicSlug) {
         // Keep the last clinic slug for future redirects
         localStorage.setItem('lastClinicSlug', clinicSlug);
-        router.push(`/${clinicSlug}/login`);
+        router.push(`/c/${clinicSlug}/login`);
       } else {
         router.push('/login');
       }

@@ -29,10 +29,10 @@ function PaymentCard({ payment, index }: PaymentCardProps) {
               <p className="text-sm text-gray-500">{payment.service}</p>
             </div>
             <span className={`font-medium text-lg ${
-              payment.status === 'paid' 
+              payment.status === 'completed' 
                 ? 'text-green-600' 
-                : payment.status === 'canceled' 
-                  ? 'text-red-600' 
+                : payment.status === 'pending' 
+                  ? 'text-yellow-600' 
                   : 'text-blue-600'
             }`}>
               R$ {payment.value.toFixed(2)}
@@ -43,17 +43,17 @@ function PaymentCard({ payment, index }: PaymentCardProps) {
               Vencimento: {new Date(payment.dueDate).toLocaleDateString()}
             </span>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              payment.status === 'paid'
+              payment.status === 'completed'
                 ? 'bg-green-100 text-green-800'
-                : payment.status === 'canceled'
-                  ? 'bg-red-100 text-red-800'
-                  : 'bg-yellow-100 text-yellow-800'
+                : payment.status === 'pending'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-blue-100 text-blue-800'
             }`}>
-              {payment.status === 'paid' 
+              {payment.status === 'completed' 
                 ? 'Pago' 
-                : payment.status === 'canceled' 
-                  ? 'Cancelado' 
-                  : 'Pendente'}
+                : payment.status === 'pending' 
+                  ? 'Pendente' 
+                  : 'Conciliado'}
             </span>
           </div>
         </div>

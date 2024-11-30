@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { FaBell, FaCog, FaSearch, FaUserCircle } from 'react-icons/fa';
-import { useAuth } from '@/app/auth/context/AuthContext';
+import { useAuth } from '@/auth/context/AuthContext';
 
 interface Notification {
   id: number;

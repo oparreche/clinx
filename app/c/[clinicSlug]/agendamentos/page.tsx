@@ -7,8 +7,6 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useParams } from 'next/navigation';
 import { EventClickArg } from '@fullcalendar/core';
-import { Dialog } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import { FaCalendarAlt, FaList, FaPlus, FaFilter } from 'react-icons/fa';
 import appointmentService, { Appointment, CreateAppointmentDTO } from '@/services/appointmentService';
 import doctorService, { Doctor } from '@/services/doctorService';
@@ -17,7 +15,7 @@ import NewAppointmentModal from '@/components/appointments/NewAppointmentModal';
 import EditAppointmentModal from '@/components/appointments/EditAppointmentModal';
 import AppointmentList from '@/components/appointments/AppointmentList';
 import FilterPanel from '@/components/appointments/FilterPanel';
-import { useAuth } from '@/app/auth/context/AuthContext';
+import { useAuth } from '@/auth/context/AuthContext';
 
 function AgendamentosContent() {
   const params = useParams();
@@ -37,11 +35,12 @@ function AgendamentosContent() {
   const [error, setError] = useState<string | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [filters, setFilters] = useState({
+    search: '',
     doctor: '',
     patient: '',
     status: '',
-    startDate: '',
-    endDate: ''
+    startDate: null as Date | null,
+    endDate: null as Date | null
   });
 
   useEffect(() => {
@@ -58,7 +57,7 @@ function AgendamentosContent() {
         console.log('Loading appointments data for clinic:', clinicSlug);
         
         const [appointmentsData, doctorsData, patientsData] = await Promise.all([
-          appointmentService.getAppointments(clinicSlug),
+          appointmentService.getAppointments(clinicSlug, filters),
           doctorService.getDoctors(clinicSlug),
           patientService.getPatients(clinicSlug),
         ]);
@@ -94,26 +93,13 @@ function AgendamentosContent() {
       } catch (err: any) {
         console.error('Error loading appointments:', err);
         setError(err.response?.data?.message || 'Erro ao carregar os agendamentos');
-        
-        // Log detalhado do erro
-        if (err.response) {
-          console.error('Error response:', {
-            status: err.response.status,
-            data: err.response.data,
-            headers: err.response.headers
-          });
-        } else if (err.request) {
-          console.error('Error request:', err.request);
-        } else {
-          console.error('Error message:', err.message);
-        }
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [clinicSlug, user]);
+  }, [clinicSlug, user, filters]);
 
   // Aplicar filtros aos agendamentos
   useEffect(() => {
@@ -130,11 +116,21 @@ function AgendamentosContent() {
     if (filters.status) {
       filtered = filtered.filter(app => app.status === filters.status);
     }
-    if (filters.startDate && filters.startDate !== '') {
-      filtered = filtered.filter(app => new Date(app.start_time) >= new Date(filters.startDate));
+    if (filters.startDate && filters.startDate !== null) {
+      filtered = filtered.filter(app => new Date(app.start_time) >= new Date(filters.startDate as Date));
     }
-    if (filters.endDate && filters.endDate !== '') {
-      filtered = filtered.filter(app => new Date(app.start_time) <= new Date(filters.endDate));
+    if (filters.endDate && filters.endDate !== null) {
+      filtered = filtered.filter(app => new Date(app.start_time) <= new Date(filters.endDate as Date));
+    }
+    if (filters.search) {
+      filtered = filtered.filter(app => {
+        const search = filters.search.toLowerCase();
+        return (
+          app.doctor?.name.toLowerCase().includes(search) ||
+          app.patient?.name.toLowerCase().includes(search) ||
+          app.notes?.toLowerCase().includes(search) || false
+        );
+      });
     }
 
     console.log('Filtered appointments:', {
@@ -142,7 +138,26 @@ function AgendamentosContent() {
       filtered: filtered.length
     });
 
+    // Atualizar tanto a lista quanto os eventos do calendário
     setFilteredAppointments(filtered);
+    
+    // Atualizar eventos do calendário
+    const calendarEventsData = filtered.map(appointment => ({
+      id: appointment.id.toString(),
+      title: `${appointment.patient?.name || 'Paciente'} - ${appointment.doctor?.name || 'Médico'}`,
+      start: appointment.start_time,
+      end: appointment.end_time,
+      className: `status-${appointment.status}`,
+      backgroundColor: getStatusColor(appointment.status),
+      borderColor: getStatusColor(appointment.status),
+      extendedProps: {
+        doctor: appointment.doctor,
+        patient: appointment.patient,
+        status: appointment.status,
+        notes: appointment.notes,
+      }
+    }));
+    setCalendarEvents(calendarEventsData);
   }, [filters, appointments]);
 
   const getStatusColor = (status: string) => {
@@ -281,6 +296,11 @@ function AgendamentosContent() {
     }
   };
 
+  const handleFilterChange = (newFilters: any) => {
+    console.log('Applying filters:', newFilters);
+    setFilters(newFilters);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -363,7 +383,7 @@ function AgendamentosContent() {
             doctors={doctors}
             patients={patients}
             filters={filters}
-            onFilterChange={setFilters}
+            onFilterChange={handleFilterChange}
           />
         </div>
       )}

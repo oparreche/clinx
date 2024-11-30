@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/app/auth/context/AuthContext';
+import { useAuth } from '@/auth/context/AuthContext';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';

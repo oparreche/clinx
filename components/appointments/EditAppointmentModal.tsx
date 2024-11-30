@@ -32,7 +32,6 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
       setFormData({
         doctor_id: appointment.doctor_id,
         patient_id: appointment.patient_id,
-        date: appointment.date,
         start_time: appointment.start_time,
         end_time: appointment.end_time,
         notes: appointment.notes,
@@ -135,29 +134,15 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Data
-              </label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Hora Início
+                  Horário Início
                 </label>
                 <input
-                  type="time"
+                  type="datetime-local"
                   name="start_time"
-                  value={formData.start_time}
+                  value={formData.start_time ? formData.start_time.slice(0, 16) : ''}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
@@ -166,12 +151,12 @@ const EditAppointmentModal: React.FC<EditAppointmentModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Hora Fim
+                  Horário Fim
                 </label>
                 <input
-                  type="time"
+                  type="datetime-local"
                   name="end_time"
-                  value={formData.end_time}
+                  value={formData.end_time ? formData.end_time.slice(0, 16) : ''}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
